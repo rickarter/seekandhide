@@ -29,7 +29,8 @@ ACharacterBase::ACharacterBase()
 	//Configure camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Follow Camera"));
 	FollowCamera->SetupAttachment(GetMesh(), "Head");
-	FollowCamera->SetRelativeLocationAndRotation(FVector(0.0f, 20.0f, 0.0f), FRotator(0.0f, 90.0f, 270.0f));
+	FollowCamera->SetRelativeLocationAndRotation(FVector(0.0f, -0.3f, 0.3f), FRotator(100.0f, 90.0f, 0.0f));
+	FollowCamera->SetRelativeScale3D(FVector(0.0125f, 0.0125f, 0.0125f));
 	FollowCamera->SetFieldOfView(103.0f);
 	FollowCamera->bUsePawnControlRotation = true;
 
@@ -37,7 +38,7 @@ ACharacterBase::ACharacterBase()
 	SlidingTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
 
 	//Set replication
-	bReplicates = true;
+	bReplicates = false;
 }
 
 // Called when the game starts or when spawned
@@ -65,7 +66,7 @@ void ACharacterBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	//Control sliding
-	SlidingOnSlope();
+	//SlidingOnSlope();
 }
 
 // Called to bind functionality to input
@@ -214,50 +215,29 @@ void ACharacterBase::SlidingOnSlope()
 
 void ACharacterBase::Slide(float Speed)
 {
-	if (CharacterMovement->IsFalling())
-	{
-		HasSlideWhenLanded = false;
-	}
-
 	SlidingSpeed = Speed * GetWorld()->GetDeltaSeconds();
 
+	/* SlidingOnSlope
 	if (PreviousSlidingLocation.Z > GetActorLocation().Z)
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Yellow, TEXT("SlidingDown"));
+		GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Yellow, TEXT("SlidingDown"));
 		IsSlidingOnSlope = true;
 	}
 	else
 	{
 		IsSlidingOnSlope = false;
-	}
-
-	/*if (PreviousSlidingLocation.Z == GetActorLocation().Z)
-	{
-		IsSlidingOnSlope = false;
-	}
-	else
-	{
-
-		if (PreviousSlidingLocation.Z > GetActorLocation().Z)
-		{
-			IsSlidingUp = false;
-			IsSlidingOnSlope = true;
-		}
-
-		if (PreviousSlidingLocation.Z < GetActorLocation().Z)
-		{
-			IsSlidingUp = true;
-		}
 	}*/
 
-
 	PreviousSlidingLocation = GetActorLocation();
-	SetOnServerSlidingOffset(SlideDirection * Speed * 5);
 
+	AddMovementInput(SlideDirection * Speed * SlidingSpeedModifier);
+	//SetOnServerSlidingOffset(SlideDirection * Speed * SlidingSpeedModifier);
+
+	//AddActorWorldOffset(SlideDirection * Speed * SlidingSpeedModifier, true);
+	//CharacterMovement->AddInputVector(SlideDirection * Speed * SlidingSpeedModifier, true);
 	//CharacterMovement->AddInputVector(SlideDirection * Speed * 10);
 	//AddActorLocalOffset(SlideDirection * Speed * 10, true);
-	//AddActorWorldOffset(SlideDirection * Speed * 10, true);
-	//AddMovementInput(SlideDirection * Speed * 10);
+	//AddMovementInput(SlideDirection * Speed * SlidingSpeedModifier);
 }
 
 bool ACharacterBase::IsCharacterMoving()
@@ -305,17 +285,8 @@ void ACharacterBase::SetOnServerMovementSpeed_Implementation(float Value)
 	CharacterMovement->MaxWalkSpeed = Value;
 }
 
-bool ACharacterBase::SetOnServerMovementSpeed_Validate(float Value)
-{
-	return true;
-}
-
 void ACharacterBase::SetOnServerSlidingOffset_Implementation(FVector Value)
 {
-	AddActorWorldOffset(Value);
-}
-
-bool ACharacterBase::SetOnServerSlidingOffset_Validate(FVector Value)
-{
-	return true;
+	//AddActorWorldOffset(Value);
+	AddMovementInput(Value);
 }

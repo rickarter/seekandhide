@@ -25,15 +25,15 @@ public:
 	UFUNCTION()
 		void Slide(float Speed);
 
-	UFUNCTION(Reliable, Server, WithValidation)
+	UFUNCTION(Reliable, Server)//, WithValidation)
 		void SetOnServerMovementSpeed(float Value);
 	void SetOnServerMovementSpeed_Implementation(float Value);
-	bool SetOnServerMovementSpeed_Validate(float Value);
+	//bool SetOnServerMovementSpeed_Validate(float Value);
 
-	UFUNCTION(Reliable, Server, WithValidation)
+	UFUNCTION(Reliable, Server)//, WithValidation)
 		void SetOnServerSlidingOffset(FVector Value);
 	void SetOnServerSlidingOffset_Implementation(FVector);
-	bool SetOnServerSlidingOffset_Validate(FVector Value);
+	//bool SetOnServerSlidingOffset_Validate(FVector Value);
 
 protected:
 	// Called when the game starts or when spawned
@@ -59,9 +59,9 @@ protected:
 
 	UTimelineComponent* SlidingTimeline;
 	float SlidingSpeed;
+	float SlidingSpeedModifier = 5;
 	FVector PreviousSlidingLocation;
 	FVector SlideDirection;
-	bool HasSlideWhenLanded = false;
 	bool IsSlidingOnSlope = false;
 	bool IsSlidingUp = false;
 
