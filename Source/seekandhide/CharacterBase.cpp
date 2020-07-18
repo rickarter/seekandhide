@@ -8,6 +8,7 @@
 #include "GameFramework/Controller.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Math/UnrealMathUtility.h"
+#include "Net/UnrealNetwork.h"
 #include "Engine.h"
 
 // Sets default values
@@ -17,6 +18,7 @@ ACharacterBase::ACharacterBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CapsuleComponent->InitCapsuleSize(42.f, 96.0f);
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -97.0));
 
 	// Configure character movement
 	CharacterMovement->bOrientRotationToMovement = false; // Character doesn't move in the direction of input...	
@@ -38,7 +40,7 @@ ACharacterBase::ACharacterBase()
 	SlidingTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
 
 	//Set replication
-	bReplicates = false;
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -67,6 +69,12 @@ void ACharacterBase::Tick(float DeltaTime)
 
 	//Control sliding
 	//SlidingOnSlope();
+}
+
+void ACharacterBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACharacterBase, isSliding);
 }
 
 // Called to bind functionality to input
@@ -175,6 +183,15 @@ void ACharacterBase::StartSliding()
 			IsSlidingOnSlope = false;
 			PreviousSlidingLocation = GetActorLocation();
 
+			if (HasAuthority())
+			{
+				isSliding = true;
+			}
+			else
+			{
+				SetOnServerIsSliding(true);
+			}
+
 			SlidingTimeline->PlayFromStart();
 		}
 	}
@@ -190,6 +207,15 @@ void ACharacterBase::StopSliding()
 		if (SlidingTimeline->IsPlaying())
 		{
 			SlidingTimeline->Stop();
+		}
+
+		if (HasAuthority())
+		{
+			isSliding = true;
+		}
+		else
+		{
+			SetOnServerIsSliding(false);
 		}
 	}
 }
@@ -265,6 +291,8 @@ void ACharacterBase::ResolveMovement()
 	{
 	case Standing:
 		//UE_LOG(LogTemp, Warning, TEXT("Standing"))
+		GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -97.0f));
+		CapsuleComponent->SetCapsuleHalfHeight(96.0f);
 		break;
 	case Walking:
 		//UE_LOG(LogTemp, Warning, TEXT("Walking"))
@@ -274,6 +302,8 @@ void ACharacterBase::ResolveMovement()
 		break;
 	case Sliding:
 		//UE_LOG(LogTemp, Warning, TEXT("Sliding"))
+		CapsuleComponent->SetCapsuleHalfHeight(65.0f);
+		//GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -114.0f));
 		break;
 	default:
 		break;
@@ -289,4 +319,9 @@ void ACharacterBase::SetOnServerSlidingOffset_Implementation(FVector Value)
 {
 	//AddActorWorldOffset(Value);
 	AddMovementInput(Value);
+}
+
+void ACharacterBase::SetOnServerIsSliding_Implementation(bool Value)
+{
+	isSliding = Value;
 }

@@ -25,6 +25,9 @@ public:
 	UFUNCTION()
 		void Slide(float Speed);
 
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = States)
+		bool isSliding = false;
+
 	UFUNCTION(Reliable, Server)//, WithValidation)
 		void SetOnServerMovementSpeed(float Value);
 	void SetOnServerMovementSpeed_Implementation(float Value);
@@ -35,9 +38,14 @@ public:
 	void SetOnServerSlidingOffset_Implementation(FVector);
 	//bool SetOnServerSlidingOffset_Validate(FVector Value);
 
+	UFUNCTION(Reliable, Server)
+		void SetOnServerIsSliding(bool Value);
+	void SetOnServerIsSliding_Implementation(bool Value);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 	/** References to Object */
 	UCapsuleComponent* CapsuleComponent = GetCapsuleComponent();
@@ -65,7 +73,7 @@ protected:
 	bool IsSlidingOnSlope = false;
 	bool IsSlidingUp = false;
 
-	float WalkSpeed = 600.0f;
+	float WalkSpeed;
 	float SprintSpeedMultiplier = 2.0f;
 	float SprintSpeed;
 
@@ -84,7 +92,6 @@ protected:
 	void StartSliding();
 	void StopSliding();
 	void FindSlideDirection();
-	void SlideWhenLand();
 	void SlidingOnSlope();
 
 	// Called every frame
